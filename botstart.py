@@ -31,8 +31,9 @@ async def on_message(message: Message):
     if await image_download(message):
         return
     global dcheck
-    file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
-    acheck = await file.read()
+    if kayit_check(message):
+        file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
+        acheck = await file.read()
     if acheck != "NULL": #TODO: kişiye özel olmalı
         return await get_answer_image(message)
     if dcheck == 1: #TODO: kişiye özel olmalı, ders dosyasının 2.satırını yazıp oradan oku.
