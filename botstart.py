@@ -34,8 +34,8 @@ async def on_message(message: Message):
     if kayit_check(message):
         file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
         acheck = await file.read()
-    if acheck != "NULL": #TODO: kişiye özel olmalı
-        return await get_answer_image(message)
+        if acheck != "NULL": #TODO: kişiye özel olmalı
+            return await get_answer_image(message)
     if dcheck == 1: #TODO: kişiye özel olmalı, ders dosyasının 2.satırını yazıp oradan oku.
         return await selectDers(message)
     try:
