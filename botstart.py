@@ -107,16 +107,6 @@ async def download_file(url, path):
                 await f.close()
                 return
 
-@bot.command(pass_context=True)
-async def yazi(ctx, *args):
-    await bot.delete_message(ctx.message)
-    count = 1 
-    string1 = args[0]
-    while (count != len(args)):
-        string1 = string1 + " " + args[count]
-        count = count + 1
-    return await bot.send_message(ctx.message.channel, string1)
-
 def kayit_check(message: Message):
 
     if os.path.exists("db/" + message.author.name):
@@ -345,7 +335,7 @@ async def yazi(ctx, *args):
 
 @sudo.command(pass_context=True)
 async def restart(ctx):
-    process = subprocess.Popen(["git", "pull", "--force"], stdout=subprocess.PIPE)
+    process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
     await bot.send_message(ctx.message.channel, str(process.communicate()[0], "utf-8"))
     await bot.send_message(ctx.message.channel, 'Restarting...')
     os.execl("botstart.py", sys.argv[0])
