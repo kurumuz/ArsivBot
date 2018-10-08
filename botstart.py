@@ -1,8 +1,10 @@
+#!/usr/bin/python3
 import json
 import os
 import aiohttp
 import aiofiles
 import os.path
+import subprocess
 from pathlib import Path
 import sys
 import requests
@@ -10,10 +12,10 @@ import urllib.request
 import discord
 from discord.utils import get
 from discord import Message, Member, Forbidden, Reaction, User, Role, Embed, Emoji
-from discord.ext.commands import Bot, Context, UserConverter, CommandError
+from discord.ext.commands import Bot, Context, UserConverter, CommandError, Converter
 from requests import Response
 prefix = "."
-global dcheck 
+global dcheck
 dcheck = 0
 resimcount = 0
 
@@ -34,9 +36,9 @@ async def on_message(message: Message):
     if kayit_check(message):
         file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
         acheck = await file.read()
-        if acheck != "NULL": #TODO: kişiye özel olmalı
+        if acheck != "NULL":
             return await get_answer_image(message)
-    if dcheck == 1: #TODO: kişiye özel olmalı, ders dosyasının 2.satırını yazıp oradan oku.
+    if dcheck == 1: #TODO: kişiye özel olmalı
         return await selectDers(message)
     try:
         if message.content[0] == prefix:
@@ -95,11 +97,6 @@ async def image_download(message: Message):
             if len(message.attachments) < 1:
                 print("resim yok")
                 return
-
-        #if dersargumani == "NULL" and len(message.attachments) > 0:
-        #   await bot.send_message(message.channel, content = "lütfen soru göndermeden önce /d komutu ile dersi belirtiniz." + " " + message.author.mention)
-        #  return
-
 
 async def download_file(url, path):
     async with aiohttp.ClientSession() as session:
@@ -222,10 +219,19 @@ async def s(ctx, *args):
         while(i != len(args)):
             path = "db/" + ctx.message.author.name + "/Çözülmemiş/" + dersargumani
             if os.path.exists(path):
+                if len(str(args[i]).split('-')) == 2:
+                    a = args[i].split('-')[0]
+                    while (int(a) <= int(args[i].split('-')[1])):
+                        if os.path.isfile(path + "/" + dersargumani + a + ".jpg"):
+                            await bot.send_file(ctx.message.channel, path + "/" + dersargumani + a + ".jpg")
+                            a = str(int(a) + 1)
+                        else:
+                            await bot.send_message(ctx.message.channel, dersargumani + a + " adında bir soru bulunamadı " + ctx.message.author.mention)
+                i = i + 1
                 if os.path.isfile(path + "/" + dersargumani + args[i] + ".jpg"):
                     await bot.send_file(ctx.message.channel, path + "/" + dersargumani + args[i] + ".jpg")          
                 else:
-                    await bot.send_message(ctx.message.channel, dersargumani + args[i] + " adında bir soru bulunamadı" + ctx.message.author.mention)    
+                    await bot.send_message(ctx.message.channel, dersargumani + args[i] + " adında bir soru bulunamadı " + ctx.message.author.mention)
 
                 if os.path.isfile("db/" + ctx.message.author.name + "/Çözülmüş/" + dersargumani + "/" + dersargumani + args[i] + ".jpg"):
                     await bot.send_file(ctx.message.channel, "db/" + ctx.message.author.name + "/Çözülmüş/" + dersargumani + "/" + dersargumani + args[i] + ".jpg")                 
@@ -308,4 +314,39 @@ async def d(ctx, *args):
         return await bot.send_message(ctx.message.channel, "Bu eylemi gerçekleştirmeniz için kaydolmanız gerekli, kaydolmak için /r yazın. " + ctx.message.author.mention)
         
 
-bot.run("NDk2ODA4MjYwOTM5MDIyMzQ3.DpY1AA.ndIF0XizMyHvVYVNxL9pzkU3AlY")
+async def sudo_check(message: Message):
+    file = await aiofiles.open("db/" + message.author.name + "/sudo" , "r")
+    sudo = await file.read()
+    print(sudo)
+    if sudo == "1":
+        print("Kullanıcı " + message.author.name + " sudo yetkilerine sahip, izin verildi.")
+        return True
+    else:
+        await bot.send_message(message.channel, message.author.mention + " sudo yetkilerine sahip değil, bu olay raporlanacak")
+        return False
+
+@bot.group(pass_context=True)
+async def sudo(ctx):
+    if not await sudo_check(ctx.message):
+        ctx.invoked_subcommand = None
+        return
+    if ctx.invoked_subcommand is None:
+        await bot.send_message(ctx.message.channel, 'yanlış .sudo komutu girildi.')
+
+@sudo.command(pass_context=True)
+async def yazi(ctx, *args):
+    await bot.delete_message(ctx.message)
+    count = 1 
+    string1 = args[0]
+    while (count != len(args)):
+        string1 = string1 + " " + args[count]
+        count = count + 1
+    return await bot.send_message(ctx.message.channel, string1)
+
+@sudo.command(pass_context=True)
+async def restart(ctx):
+    process = subprocess.Popen(["git", "pull", "--force"], stdout=subprocess.PIPE)
+    await bot.send_message(ctx.message.channel, str(process.communicate()[0], "utf-8"))
+    await bot.send_message(ctx.message.channel, 'Restarting...')
+    os.execl("botstart.py", sys.argv[0])
+bot.run("NDk4NTQxNzgyNDE0NjU1NTEw.Dpv4YA.-htHuX70ttVg8wRqdmk0GMjD_D0")
