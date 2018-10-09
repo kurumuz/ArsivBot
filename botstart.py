@@ -127,6 +127,8 @@ async def r(ctx):
         file.write("NULL")
         file = open("db/" + ctx.message.author.name + "/acheck", "w+")
         file.write("NULL")
+        file = open("db/" + ctx.message.author.name + "/sudo", "w+")
+        file.write("0")
         os.makedirs("db/" + ctx.message.author.name + "/Çözülmemiş/")
         os.makedirs("db/" + ctx.message.author.name + "/Çözülmüş/")
 
@@ -303,17 +305,45 @@ async def d(ctx, *args):
     else:
         return await bot.send_message(ctx.message.channel, "Bu eylemi gerçekleştirmeniz için kaydolmanız gerekli, kaydolmak için /r yazın. " + ctx.message.author.mention)
         
+@bot.command(pass_context=True)
+async def hepsi(ctx, *args):
+    if await sudo_check(ctx.message):
+        i = 0
+        file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+        dersargumani = await file.read()
+        kacTane=len(os.listdir("db/" + ctx.message.author.name + "/Çözülmemiş/" + dersargumani))
+        while(i != kacTane-1):
+            path = "db/" + ctx.message.author.name + "/Çözülmemiş/" + dersargumani
+            if os.path.exists(path):
+                if os.path.isfile(path + "/" + dersargumani +str(i+1) + ".jpg"):
+                    await bot.send_file(ctx.message.channel, path + "/" + dersargumani + str(i+1) + ".jpg")
+                else:
+                    await bot.send_message(ctx.message.channel, dersargumani + str(i+1) + " adında bir soru bulunamadı" + ctx.message.author.mention)
+
+                if os.path.isfile("db/" + ctx.message.author.name + "/Çözülmüş/" + dersargumani + "/" + dersargumani + str(i+1) + ".jpg"):
+                    await bot.send_file(ctx.message.channel, "db/" + ctx.message.author.name + "/Çözülmüş/" + dersargumani + "/" + dersargumani + str(i+1) + ".jpg")
+                i = i + 1
+
+            else:
+                i = i + 1
+                await bot.send_message(ctx.message.channel, dersargumani + " dersine kayıtlı hiçbir soru yok." + ctx.message.author.mention)
+    else:
+        return await bot.send_message(ctx.message.channel, "Bu komutu kullanmanız için gereken yetkilere sahip değilsiniz." + ctx.message.author.mention)
 
 async def sudo_check(message: Message):
-    file = await aiofiles.open("db/" + message.author.name + "/sudo" , "r")
-    sudo = await file.read()
-    print(sudo)
-    if sudo == "1":
-        print("Kullanıcı " + message.author.name + " sudo yetkilerine sahip, izin verildi.")
-        return True
+    if kayit_check(message):
+        file = await aiofiles.open("db/" + message.author.name + "/sudo" , "r")
+        sudo = await file.read()
+        if sudo == "1":
+            print("Kullanıcı " + message.author.name + " sudo yetkilerine sahip, izin verildi.")
+            return True
+        else:
+            await bot.send_message(message.channel, message.author.mention + " sudo yetkilerine sahip değil, bu olay raporlanacak")
+            return False
     else:
-        await bot.send_message(message.channel, message.author.mention + " sudo yetkilerine sahip değil, bu olay raporlanacak")
+        await bot.send_message(message.channel, "Bu eylemi gerçekleştirmeniz için kaydolmanız gerekli, kaydolmak için /r yazın. " + message.author.mention)
         return False
+        
 
 @bot.group(pass_context=True)
 async def sudo(ctx):
@@ -339,4 +369,9 @@ async def restart(ctx):
     await bot.send_message(ctx.message.channel, str(process.communicate()[0], "utf-8"))
     await bot.send_message(ctx.message.channel, 'Restarting...')
     os.execl("botstart.py", sys.argv[0])
-bot.run("NDk4NTQxNzgyNDE0NjU1NTEw.Dpv4YA.-htHuX70ttVg8wRqdmk0GMjD_D0")
+
+    
+tokenfile = open("db/token", "r")
+token = tokenfile.read()
+tokenfile.close()
+bot.run(token)
