@@ -30,8 +30,9 @@ async def on_ready():
 async def on_message(message: Message):
     if message.author == bot.user:
         return
-    if not kayit_check(message):
-        register(message)
+    
+    register(message)
+    
     if await image_download(message):
         return
     global dcheck       
@@ -109,29 +110,26 @@ async def download_file(url, path):
                 await f.close()
                 return
 
-def kayit_check(message: Message):
-
-    if os.path.exists("db/" + message.author.name):
-        return True
-    else:
-        return False
-    return
-
 def register(message: Message):
+    if not os.path.exists("db/" + message.author.name):
+        os.makedirs("db/" + message.author.name)
+    if not os.path.isfile("db/" + message.author.name + "/ders"):
+        file = open("db/" + message.author.name + "/ders", "w+")
+        file.write("NULL")
+        file.close()
+    if not os.path.isfile("db/" + message.author.name + "/acheck"):
+        file = open("db/" + message.author.name + "/acheck", "w+")
+        file.write("NULL")
+        file.close()
+    if not os.path.isfile("db/" + message.author.name + "/sudo"):
+        file = open("db/" + message.author.name + "/sudo", "w+")
+        file.write("0")
+        file.close()
+    if not os.path.exists("db/" + message.author.name + "/Çözülmemiş/"):
+        os.makedirs("db/" + message.author.name + "/Çözülmemiş/")
+    if not os.path.exists("db/" + message.author.name + "/Çözülmüş/"):
+        os.makedirs("db/" + message.author.name + "/Çözülmüş/")
 
-    os.makedirs("db/" + message.author.name)
-    file = open("db/" + message.author.name + "/otodb", "w+")
-    file = open("db/" + message.author.name + "/manudb", "w+")
-    file.write("1")
-    file = open("db/" + message.author.name + "/ders", "w+")
-    file.write("NULL")
-    file = open("db/" + message.author.name + "/acheck", "w+")
-    file.write("NULL")
-    file = open("db/" + message.author.name + "/sudo", "w+")
-    file.write("0")
-    os.makedirs("db/" + message.author.name + "/Çözülmemiş/")
-    os.makedirs("db/" + message.author.name + "/Çözülmüş/")
-    file.close()
 
 def init():
     if not os.path.exists("db"):
@@ -296,6 +294,15 @@ async def d(ctx, *args):
             return await bot.send_message(ctx.message.channel, "geçersiz ders adı. Lütfen geçerli bir ders adı giriniz. yardım için /yardim " + ctx.message.author.mention)
     else:
         return await bot.send_message(ctx.message.channel, "Lütfen tek bir argüman giriniz. " + ctx.message.author.mention)
+
+@bot.group(pass_context=True)
+async def n(ctx, *args):
+    if ctx.invoked_subcommand is None:
+        await bot.send_message(ctx.message.channel, 'yanlış .sudo komutu girildi.')
+
+@n.command(pass_context=True)
+async def ekle(ctx, *args):
+    return
     
         
 @bot.command(pass_context=True)
