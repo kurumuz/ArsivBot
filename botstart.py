@@ -343,6 +343,16 @@ async def sudo(ctx):
         await bot.send_message(ctx.message.channel, 'yanlış .sudo komutu girildi.')
 
 @sudo.command(pass_context=True)
+async def yazi(ctx, *args):
+    await bot.delete_message(ctx.message)
+    count = 1 
+    string1 = args[0]
+    while (count != len(args)):
+        string1 = string1 + " " + args[count]
+        count = count + 1
+    return await bot.send_message(ctx.message.channel, string1)
+
+@sudo.command(pass_context=True)
 async def restart(ctx):
     
     process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
