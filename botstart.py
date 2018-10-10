@@ -40,6 +40,11 @@ async def on_message(message: Message):
        
     file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
     acheck = await file.read()
+
+    file = await aiofiles.open("db/" + message.author.name + "/ncheck", "r")
+    ncheck = await file.read()
+    if ncheck != "NULL":
+        return await get_note_image(message)
     if acheck != "NULL":
         return await get_answer_image(message)
     if dcheck == 1: #TODO: kişiye özel olmalı
@@ -67,7 +72,9 @@ async def image_download(message: Message):
     dersargumani = file.read()
     file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
     acheck = await file.read()
-    if dersargumani != "NULL" and acheck == "NULL":
+    file = await aiofiles.open("db/" + message.author.name + "/ncheck", "r")
+    ncheck = await file.read()
+    if dersargumani != "NULL" and acheck == "NULL" and ncheck == "NULL":
 
         if await is_image(message):
             i = 0
@@ -120,6 +127,10 @@ def register(message: Message):
         file.close()
     if not os.path.isfile("db/" + message.author.name + "/acheck"):
         file = open("db/" + message.author.name + "/acheck", "w+")
+        file.write("NULL")
+        file.close()
+    if not os.path.isfile("db/" + message.author.name + "/ncheck"):
+        file = open("db/" + message.author.name + "/ncheck", "w+")
         file.write("NULL")
         file.close()
     if not os.path.isfile("db/" + message.author.name + "/sudo"):
@@ -260,6 +271,29 @@ async def get_answer_image(message: Message):
         return await bot.send_message(message.channel, "Lütfen cevap fotoğrafını gönderin, iptal için iptal yazın." + message.author.mention)
     return
 
+async def get_note_image(message: Message):
+    
+    if len(message.content) > 0:
+        if message.content[0] == "i": #TODO: i'yi küçültüp bak.
+            file = await aiofiles.open("db/" + message.author.name + "/ncheck", "w")
+            await bot.send_message(message.channel, "İptal edildi." + message.author.mention)
+            return await file.write("NULL")
+        
+    if await is_image(message):
+        file = await aiofiles.open("db/" + message.author.name + "/ders", "r")
+        dersargumani = await file.read()
+        file = await aiofiles.open("db/" + message.author.name + "/ncheck", "r")
+        ncheck = await file.read()
+        url = message.attachments[0]['url']
+        await download_file(url, "db/" + message.author.name + "/Notlar/" + dersargumani + "/" + ncheck),
+        file = await aiofiles.open("db/" + message.author.name + "/ncheck", "w")
+        await file.write("NULL")
+        return await bot.send_message(message.channel, "Notunuz " + ncheck + " adı ile kayıt edildi." + message.author.mention)
+    else:
+        return await bot.send_message(message.channel, "Lütfen cevap fotoğrafını gönderin, iptal için iptal yazın." + message.author.mention)
+    return
+
+
 @bot.command(pass_context=True) #soruya cevap vermek veya çözülmüş işaretlemek için.
 async def a(ctx, *args):
     file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
@@ -305,11 +339,20 @@ async def n(ctx):
 
 @n.command(pass_context=True)
 async def ekle(ctx, *args):
+    
     file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
     dersargumani = await file.read()
+    
     if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
         os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+        
     if len(args) > 1:
+        if args[0] == "foto":
+            file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+            dersargumani = await file.read()
+            file = await aiofiles.open("db/" + ctx.message.author.name + "/ncheck", "w")
+            await file.write(args[1] + ".jpg")
+            return await bot.send_message(ctx.message.channel, "Lütfen " + args[1] + " fotoğrafını gönderiniz." + ctx.message.author.mention)                
         notename = args[0]
         count = 2 
         string1 = ctx.message.content.split(' ', 2)[2]
@@ -327,11 +370,13 @@ async def göster(ctx, *args):
     if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
         os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
     if len(args) == 1: #sonra çoklu not ekleme eklenecek.
-        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ):
+        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ):                
             notename = args[0]
             note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "r")
             notecontent = await note.read()
             return await bot.send_message(ctx.message.channel, notecontent)
+        elif os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] + ".jpg"):
+            await bot.send_file(ctx.message.channel, "db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] + ".jpg")
         else:
             return await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
     else:
