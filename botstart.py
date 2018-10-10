@@ -5,6 +5,7 @@ import aiohttp
 import aiofiles
 import os.path
 import subprocess
+import re
 from pathlib import Path
 import sys
 import requests
@@ -124,9 +125,11 @@ def register(message: Message):
     if not os.path.isfile("db/" + message.author.name + "/sudo"):
         file = open("db/" + message.author.name + "/sudo", "w+")
         file.write("0")
-        file.close()
+        file.close
     if not os.path.exists("db/" + message.author.name + "/Çözülmemiş/"):
         os.makedirs("db/" + message.author.name + "/Çözülmemiş/")
+    if not os.path.exists("db/" + message.author.name + "/Notlar/"):
+        os.makedirs("db/" + message.author.name + "/Notlar/")
     if not os.path.exists("db/" + message.author.name + "/Çözülmüş/"):
         os.makedirs("db/" + message.author.name + "/Çözülmüş/")
 
@@ -296,15 +299,77 @@ async def d(ctx, *args):
         return await bot.send_message(ctx.message.channel, "Lütfen tek bir argüman giriniz. " + ctx.message.author.mention)
 
 @bot.group(pass_context=True)
-async def n(ctx, *args):
+async def n(ctx):
     if ctx.invoked_subcommand is None:
-        await bot.send_message(ctx.message.channel, 'yanlış .sudo komutu girildi.')
+        await bot.send_message(ctx.message.channel, 'yanlış .n komutu girildi.')
 
 @n.command(pass_context=True)
 async def ekle(ctx, *args):
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+    dersargumani = await file.read()
+    if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
+        os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+    if len(args) > 1:
+        notename = args[0]
+        count = 2 
+        string1 = ctx.message.content.split(' ', 2)[2]
+        note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "w")
+        await note.write(string1)
+        return await bot.send_message(ctx.message.channel, notename + " adlı notunuz kayıt edildi. " + ctx.message.author.mention)
+    else:
+        return await bot.send_message(ctx.message.channel, "Lütfen not adı ve içeriğini giriniz." + ctx.message.author.mention)
     return
+
+@n.command(pass_context=True)
+async def göster(ctx, *args):
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+    dersargumani = await file.read()
+    if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
+        os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+    if len(args) == 1: #sonra çoklu not ekleme eklenecek.
+        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ):
+            notename = args[0]
+            note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "r")
+            notecontent = await note.read()
+            return await bot.send_message(ctx.message.channel, notecontent)
+        else:
+            return await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
+    else:
+        return await bot.send_message(ctx.message.channel, "sadece bir argüman giriniz " + ctx.message.author.mention)
+    return
+
+@n.command(pass_context=True)
+async def sil(ctx, *args):
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+    dersargumani = await file.read()
+    if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
+        os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+    if len(args) == 1: #sonra çoklu not ekleme eklenecek.
+        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0]):
+            os.remove("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0])
+            return await bot.send_message(ctx.message.channel, args[0] + " adındaki not silindi " + ctx.message.author.mention)
+        else:
+            return await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
+    else:
+        return await bot.send_message(ctx.message.channel, "sadece bir argüman giriniz " + ctx.message.author.mention)
+    return
+
+@n.command(pass_context=True)
+async def liste(ctx, *args):
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
+    dersargumani = await file.read()
+    if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
+        os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+    filelist = os.listdir("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
+    filecount = len(filelist)
+    i = 0
+    string1 = '```\n'
+    while i != filecount:
+        string1 = string1 + filelist[i] + '\n'
+        i = i + 1
+    string1 = string1 + '```'
+    return await bot.send_message(ctx.message.channel, string1)
     
-        
 @bot.command(pass_context=True)
 async def hepsi(ctx, *args):
     if await sudo_check(ctx.message):
