@@ -84,7 +84,7 @@ async def image_download(message: Message):
                 os.makedirs("db/" + message.author.name + "/Çözülmemiş/" + dersargumani + "/")
                 file = await aiofiles.open("db/" + message.author.name + "/Çözülmemiş/" + dersargumani + "/db", "a+")
                 await file.write("1")
-                
+                await file.close()
             while (i != resimcount):
                 file = await aiofiles.open("db/" + message.author.name + "/Çözülmemiş/" + dersargumani + "/db", "r+")
                 sorucount = await file.readline()
@@ -97,7 +97,7 @@ async def image_download(message: Message):
                 if os.path.isfile(path):
                     await file.write(str(int(sorucount) + 1))
                     #TODO: Liste
-                    file.close()
+                    await file.close()
                 else:
                     await bot.send_message(message.channel, "İndirme sırasında hata!" + message.author.mention)
                 await bot.send_message(message.channel, "Sorunuz " + dersargumani + sorucount + " adı ile kayıt edildi." + message.author.mention)
@@ -136,7 +136,7 @@ def register(message: Message):
     if not os.path.isfile("db/" + message.author.name + "/sudo"):
         file = open("db/" + message.author.name + "/sudo", "w+")
         file.write("0")
-        file.close
+        file.close()
     if not os.path.exists("db/" + message.author.name + "/Çözülmemiş/"):
         os.makedirs("db/" + message.author.name + "/Çözülmemiş/")
     if not os.path.exists("db/" + message.author.name + "/Notlar/"):
@@ -154,6 +154,7 @@ def init():
 async def changeDers(message: Message, dersadi):
     file = await aiofiles.open("db/" + message.author.name + "/ders", "w+")
     await file.write(dersadi)
+    await file.close()
     return await bot.send_message(message.channel, "Ders " + dersadi + " olarak ayarlandı. " + message.author.mention)
 
 async def selectDers(message: Message):
@@ -226,7 +227,7 @@ async def s(ctx, *args):
                             a = str(int(a) + 1)
                         else:
                             await bot.send_message(ctx.message.channel, dersargumani + a + " adında bir soru bulunamadı " + ctx.message.author.mention)
-                i = i + 1
+                    i = i + 1
                 if os.path.isfile(path + "/" + dersargumani + args[i] + ".jpg"):
                     await bot.send_file(ctx.message.channel, path + "/" + dersargumani + args[i] + ".jpg")          
                 else:
@@ -251,7 +252,9 @@ async def get_answer_image(message: Message):
         if message.content[0] == "i": #TODO: i'yi küçültüp bak.
             file = await aiofiles.open("db/" + message.author.name + "/acheck", "w")
             await bot.send_message(message.channel, "İptal edildi." + message.author.mention)
-            return await file.write("NULL")
+            await file.write("NULL")
+            await file.close()
+            return
 
     if await is_image(message):
         file = await aiofiles.open("db/" + message.author.name + "/ders", "r")
@@ -262,10 +265,12 @@ async def get_answer_image(message: Message):
             os.makedirs("db/" + message.author.name + "/Çözülmüş/" + dersargumani + "/")
             file = await aiofiles.open("db/" + message.author.name + "/Çözülmüş/" + dersargumani + "/db", "a+")
             await file.write("1")
+            await file.close()
         url = message.attachments[0]['url']
         await download_file(url, "db/" + message.author.name + "/Çözülmüş/" + dersargumani + "/" + acheck)
         file = await aiofiles.open("db/" + message.author.name + "/acheck", "w")
         await file.write("NULL")
+        await file.close()
         return await bot.send_message(message.channel, "Çözümünüz " + acheck + " adı ile kayıt edildi." + message.author.mention)
     else:
         return await bot.send_message(message.channel, "Lütfen cevap fotoğrafını gönderin, iptal için iptal yazın." + message.author.mention)
@@ -274,10 +279,12 @@ async def get_answer_image(message: Message):
 async def get_note_image(message: Message):
     
     if len(message.content) > 0:
-        if message.content[0] == "i": #TODO: i'yi küçültüp bak.
+        if message.content[0].lower() == "i": #TODO: i'yi küçültüp bak.
             file = await aiofiles.open("db/" + message.author.name + "/ncheck", "w")
             await bot.send_message(message.channel, "İptal edildi." + message.author.mention)
-            return await file.write("NULL")
+            await file.write("NULL")
+            await file.close()
+            return
         
     if await is_image(message):
         file = await aiofiles.open("db/" + message.author.name + "/ders", "r")
@@ -288,6 +295,7 @@ async def get_note_image(message: Message):
         await download_file(url, "db/" + message.author.name + "/Notlar/" + dersargumani + "/" + ncheck),
         file = await aiofiles.open("db/" + message.author.name + "/ncheck", "w")
         await file.write("NULL")
+        await file.close()
         return await bot.send_message(message.channel, "Notunuz " + ncheck + " adı ile kayıt edildi." + message.author.mention)
     else:
         return await bot.send_message(message.channel, "Lütfen cevap fotoğrafını gönderin, iptal için iptal yazın." + message.author.mention)
@@ -306,6 +314,7 @@ async def a(ctx, *args):
             acheck = dersargumani + args[0] + ".jpg"
             file = await aiofiles.open("db/" + ctx.message.author.name + "/acheck", "r+")
             await file.write(acheck)
+            await file.close()
         else:
             await bot.send_message(ctx.message.channel, dersargumani + args[0] + " adında bir soru bulunamadı" + ctx.message.author.mention)                                         
     return
@@ -348,16 +357,16 @@ async def ekle(ctx, *args):
         
     if len(args) > 1:
         if args[0] == "foto":
-            file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
-            dersargumani = await file.read()
             file = await aiofiles.open("db/" + ctx.message.author.name + "/ncheck", "w")
             await file.write(args[1] + ".jpg")
+            await file.close()
             return await bot.send_message(ctx.message.channel, "Lütfen " + args[1] + " fotoğrafını gönderiniz." + ctx.message.author.mention)                
         notename = args[0]
         count = 2 
         string1 = ctx.message.content.split(' ', 2)[2]
         note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "w")
         await note.write(string1)
+        await note.close()
         return await bot.send_message(ctx.message.channel, notename + " adlı notunuz kayıt edildi. " + ctx.message.author.mention)
     else:
         return await bot.send_message(ctx.message.channel, "Lütfen not adı ve içeriğini giriniz." + ctx.message.author.mention)
@@ -368,8 +377,8 @@ async def göster(ctx, *args):
     file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
     dersargumani = await file.read()
     if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
-        os.makedirs("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/")
-    if len(args) == 1: #sonra çoklu not ekleme eklenecek.
+        await bot.send_message(ctx.message.channel, "bu derse kayıtlı hiçbir notunuz yok." + ctx.message.author.mention)
+    if len(args) == 1: #sonra çoklu not gösterme eklenecek.
         if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ):                
             notename = args[0]
             note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "r")
@@ -461,7 +470,10 @@ async def sudo(ctx):
 
 @sudo.command(pass_context=True)
 async def yazi(ctx, *args):
-    await bot.delete_message(ctx.message)
+    try:
+        await bot.delete_message(ctx.message)
+    except:
+        print("bot mesaj düzenleme yetkisine sahip değil veya bu mesaj DM ile gönderildi.")
     count = 1 
     string1 = args[0]
     while (count != len(args)):
