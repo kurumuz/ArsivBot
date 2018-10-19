@@ -377,17 +377,21 @@ async def göster(ctx, *args):
     file = await aiofiles.open("db/" + ctx.message.author.name + "/ders", "r")
     dersargumani = await file.read()
     if not os.path.exists("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/"):
-        await bot.send_message(ctx.message.channel, "bu derse kayıtlı hiçbir notunuz yok." + ctx.message.author.mention)
+        return await bot.send_message(ctx.message.channel, "bu derse kayıtlı hiçbir notunuz yok." + ctx.message.author.mention)
     if len(args) == 1: #sonra çoklu not gösterme eklenecek.
-        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ):                
+        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] ): 
+            print("metin notu var")               
             notename = args[0]
             note = await aiofiles.open("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + notename, "r")
             notecontent = await note.read()
-            return await bot.send_message(ctx.message.channel, notecontent)
-        elif os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] + ".jpg"):
+            await bot.send_message(ctx.message.channel, notecontent)
+        else:
+            await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
+        if os.path.isfile("db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] + ".jpg"):
+            print("foto notuda var")
             await bot.send_file(ctx.message.channel, "db/" + ctx.message.author.name + "/Notlar/" + dersargumani + "/" + args[0] + ".jpg")
         else:
-            return await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
+            await bot.send_message(ctx.message.channel, args[0] + " adında bir not bulunamadı. " + ctx.message.author.mention)
     else:
         return await bot.send_message(ctx.message.channel, "sadece bir argüman giriniz " + ctx.message.author.mention)
     return
