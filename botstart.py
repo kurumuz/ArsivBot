@@ -16,8 +16,6 @@ from discord import Message, Member, Forbidden, Reaction, User, Role, Embed, Emo
 from discord.ext.commands import Bot, Context, UserConverter, CommandError, Converter
 from requests import Response
 prefix = "."
-global dcheck
-dcheck = 0
 resimcount = 0
 
 bot = Bot(command_prefix=prefix)
@@ -35,19 +33,22 @@ async def on_message(message: Message):
     register(message)
     
     if await image_download(message):
-        return
-    global dcheck       
+        return   
        
     file = await aiofiles.open("db/" + message.author.name + "/acheck", "r")
     acheck = await file.read()
 
     file = await aiofiles.open("db/" + message.author.name + "/ncheck", "r")
     ncheck = await file.read()
+
+    file = await aiofiles.open("db/" + message.author.name + "/dcheck", "r")
+    dcheck = await file.read()
+
     if ncheck != "NULL":
         return await get_note_image(message)
     if acheck != "NULL":
         return await get_answer_image(message)
-    if dcheck == 1: #TODO: kişiye özel olmalı
+    if dcheck == "1": #TODO: kişiye özel olmalı
         return await selectDers(message)
     try:
         if message.content[0] == prefix:
@@ -129,6 +130,10 @@ def register(message: Message):
         file = open("db/" + message.author.name + "/acheck", "w+")
         file.write("NULL")
         file.close()
+    if not os.path.isfile("db/" + message.author.name + "/dcheck"):
+    	file = open("db/" + message.author.name + "/dcheck", "w+")
+    	file.write("0")
+    	file.close()
     if not os.path.isfile("db/" + message.author.name + "/ncheck"):
         file = open("db/" + message.author.name + "/ncheck", "w+")
         file.write("NULL")
@@ -158,51 +163,65 @@ async def changeDers(message: Message, dersadi):
     return await bot.send_message(message.channel, "Ders " + dersadi + " olarak ayarlandı. " + message.author.mention)
 
 async def selectDers(message: Message):
-    global dcheck
+
+    file = await aiofiles.open("db/" + message.author.name + "/dcheck", "w")
+
     if "0" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "NULL")
     if "1" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Geometri")
     if "2" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "MatematikTYT")
 
     if "3" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "MatematikAYT")
 
     if "4" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Fizik")
 
     if "5" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Kimya")
 
     if "6" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Biyoloji")
 
     if "7" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Türkçe")
 
     if "8" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Coğrafya")
 
     if "9" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Felsefe")
 
     if "10" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Tarih")
 
     if "11" in message.content.split():
-        dcheck = 0
+        await file.write("0")
+        await file.close()
         return await changeDers(message, "Din")
     
     else:
@@ -322,9 +341,13 @@ async def a(ctx, *args):
 @bot.command(pass_context=True)
 async def d(ctx, *args):
     
-    global dcheck
-    if len(args) == 0 and dcheck == 0:
-        dcheck = 1
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/dcheck", "r+")
+    dcheck = await file.read()
+    file = await aiofiles.open("db/" + ctx.message.author.name + "/dcheck", "w")
+
+    if len(args) == 0 and dcheck == "0":
+        await file.write("1")
+        await file.close()
         return await bot.send_message(ctx.message.channel, "```\nGeometri = 1\nMatematikTYT = 2\nMatematikAYT = 3\nFizik = 4\nKimya = 5\nBiyoloji = 6\nTürkçe = 7\nCoğrafya = 8\nFelsefe = 9\nTarih = 10\nDin = 11\n```")
             
     if len(ctx.message.attachments) > 0:
@@ -333,7 +356,8 @@ async def d(ctx, *args):
         if args[0] == "l":
             return await bot.send_message(ctx.message.channel, "```\nGeometri = 1\nMatematikTYT = 2\nMatematikAYT = 3\nFizik = 4\nKimya = 5\nBiyoloji = 6\nTürkçe = 7\nCoğrafya = 8\nFelsefe = 9\nTarih = 10\nDin = 11\n```")
         elif args[0] in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'}:
-            dcheck = 0
+            await file.write("0")
+            await file.close()
             return await selectDers(ctx.message)
         else:
             print("geçersiz ders adı")
