@@ -17,6 +17,8 @@ from discord import Message, Member, Forbidden, Reaction, User, Role, Embed, Emo
 from discord.ext.commands import Bot, Context, UserConverter, CommandError, Converter
 from requests import Response
 global database
+if not os.path.exists("db"):
+	os.makedirs("db")
 database = sqlite3.connect("db/database")
 prefix = "."
 resimcount = 0
