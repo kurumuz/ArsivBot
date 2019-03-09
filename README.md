@@ -6,5 +6,8 @@ bir klasör oluşturup içinde token adlı bir dosya oluşturun ve içine yazın
 Son olarak programı çalıştırmak için Python 3 interpreteri ile botstart.py dosyasını çalıştırın.
 Bu programı yazılırken aynı zamanda pypy ile de test edildi onu da kullanabilirsiniz.
 
-UYARI!!: Bu program şu an son kullanıcının yapılandırıp kullanabileceği bir durumda değil ve hatalarla dolu.
+UYARI!!: Bu program şu an son kullanıcının yapılandırıp kullanabileceği bir durumda değil ve hatalarla dolu. Programdaki çoğu kod açıklamasız ve bu şekilde anlaşılmaz durumda.
 Eğer bir geliştirici değilseniz bu programı lütfen kullanmayın.
+
+
+
