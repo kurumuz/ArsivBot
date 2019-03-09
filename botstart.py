@@ -17,8 +17,6 @@ from discord import Message, Member, Forbidden, Reaction, User, Role, Embed, Emo
 from discord.ext.commands import Bot, Context, UserConverter, CommandError, Converter
 from requests import Response
 global database
-if not os.path.exists("db"):
-	os.makedirs("db")
 database = sqlite3.connect("db/database")
 prefix = "."
 resimcount = 0
@@ -135,8 +133,10 @@ def register(message: Message):
     cursor = database.cursor()
     user = f"'%{str(message.author)}%'"
     cursor.execute(f"SELECT id, dcheck FROM users WHERE username LIKE {user}")
-    result = cursor.fetchone()[0]
-    if type(result) == NoneType:
+    result = cursor.fetchone()
+    print('test')
+    if result is None:
+        print('test2')
         cursor.execute('''INSERT INTO users(username, dcheck, acheck, ncheck, ders, sudo)
                 VALUES(?,?,?,?,?,?)''', (str(message.author), "0", "NULL", "NULL", "NULL", "0"))
         database.commit()
@@ -281,7 +281,7 @@ async def s(ctx, *args):
 async def get_answer_image(message: Message):
     global database
     cursor = database.cursor()
-    user = f"'%{str(ctx.message.author)}%'"
+    user = f"'%{str(message.author)}%'"
     if len(message.content) > 0:
         if message.content[0] == "i": #TODO: i'yi küçültüp bak.
             cursor.execute(f"UPDATE users SET acheck = 'NULL' WHERE username LIKE {user}")
@@ -345,7 +345,7 @@ async def a(ctx, *args):
             await bot.send_file(ctx.message.channel, path + "/" + dersargumani + args[0] + ".jpg")
             await bot.send_message(ctx.message.channel, "bu soru için cevap gönderin, iptal için iptal yazın." + ctx.message.author.mention)
             acheck = dersargumani + args[0] + ".jpg"
-            cursor.execute(f"UPDATE users SET acheck = {acheck} WHERE username LIKE {user}")
+            cursor.execute(f"UPDATE users SET acheck = '{acheck}' WHERE username LIKE {user}")
             database.commit()
         else:
             await bot.send_message(ctx.message.channel, dersargumani + args[0] + " adında bir soru bulunamadı" + ctx.message.author.mention)                                         
@@ -513,7 +513,7 @@ async def sudo_check(message: Message):
     
     global database
     cursor = database.cursor()
-    user = f"'%{str(ctx.message.author)}%'"
+    user = f"'%{str(message.author)}%'"
     cursor.execute(f"SELECT sudo FROM users WHERE username LIKE {user}")
     sudo = cursor.fetchone()[0]
     if sudo == "1":
@@ -547,8 +547,8 @@ async def yazi(ctx, *args):
 @sudo.command(pass_context=True)
 async def restart(ctx):
     
-    process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
-    await bot.send_message(ctx.message.channel, str(process.communicate()[0], "utf-8"))
+    #process = subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE)
+    #await bot.send_message(ctx.message.channel, str(process.communicate()[0], "utf-8"))
     await bot.send_message(ctx.message.channel, 'Restarting...')
     os.execl("botstart.py", sys.argv[0])
     
