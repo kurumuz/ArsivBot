@@ -1,0 +1,4 @@
+aiohttp==3.5.4
+discord.py==0.16.12
+aiofiles==0.4.0
+requests==2.21.0
